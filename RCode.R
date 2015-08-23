@@ -24,6 +24,10 @@ table(training$classe,prediction_train)
 # Calculate out of sample error
 prediction_test = predict(rf1, testing)
 table(testing$classe,prediction_test)
+error = testing$classe != prediction_test
+error_rate = sum(error)/length(testing$classe)
+# Out of sample error
+error_rate
 
 # Create random forest model using all training data
 rf <- randomForest(classe~., data=training, mtry=7, importance = TRUE)
