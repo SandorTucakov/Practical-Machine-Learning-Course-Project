@@ -1,0 +1,73 @@
+Report for the coursera project: Practical Machine Learning
+
+1.Brief introduction
+The random forest model is used.
+Mtry parameter is set as 7.
+The dataset is divided into 70% training and 30% test data set. The out of sample error is evaluated using the 30 test data set. In the 5885 test samples, there are 28 errors, which means the error rate is 0.476%.
+The 20 test cases are also predicted.
+Please see the code for detailed information.
+
+2.R Code
+library('caret')
+setwd('D:/Liang Tang/Scalable Machine Learning')
+# import data
+data = read.csv('pml-training.csv')
+true_testing = read.csv('pml-testing.csv')
+# Filtering the variables
+data = data[,-1]
+dataFilter = data[,c(7:9,36:48,59:67,83:85,112:123,150:159)]
+dataFilter = dataFilter[, colSums(is.na(dataFilter)) == 0 ]
+sum(complete.cases(dataFilter))
+
+# Create training and testing data set
+inTrain = createDataPartition(y = dataFilter$classe, p = 0.7, list = FALSE)
+training = dataFilter[inTrain,]
+testing = dataFilter[-inTrain,]
+
+# Create random forest model based on training data
+rf1 <- randomForest(classe~., data=training, mtry=7, importance = TRUE)
+
+# Calculate training error
+prediction_train = predict(rf1, training)
+table(training$classe,prediction_train)
+   prediction_train
+       A    B    C    D    E
+  A 3906    0    0    0    0
+  B    0 2658    0    0    0
+  C    0    0 2396    0    0
+  D    0    0    0 2252    0
+  E    0    0    0    0 2525
+
+# Calculate out of sample error
+prediction_test = predict(rf1, testing)
+table(testing$classe,prediction_test)
+   prediction_test
+       A    B    C    D    E
+  A 1672    2    0    0    0
+  B    4 1132    3    0    0
+  C    0    4 1021    1    0
+  D    0    0   13  950    1
+  E    0    0    0    0 1082
+
+error = testing$classe != prediction_test
+error_rate = sum(error)/length(testing$classe)
+# Out of sample error
+error_rate
+[1] 0.004757859
+
+# Create random forest model using all training data
+rf <- randomForest(classe~., data=training, mtry=7, importance = TRUE)
+
+# predict for the 20 samples
+answers = predict(rf, true_testing)
+
+# Create files for each of teh 20 samples
+pml_write_files = function(x){
+  n = length(x)
+  for(i in 1:n){
+    filename = paste0("problem_id_",i,".txt")
+    write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+  }
+}
+
+pml_write_files(answers)
