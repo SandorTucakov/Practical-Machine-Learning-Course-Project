@@ -9,25 +9,20 @@ dataFilter = data[,c(7:9,36:48,59:67,83:85,112:123,150:159)]
 dataFilter = dataFilter[, colSums(is.na(dataFilter)) == 0 ]
 sum(complete.cases(dataFilter))
 
-# Create training and testing data set
-inTrain = createDataPartition(y = dataFilter$classe, p = 0.7, list = FALSE)
-training = dataFilter[inTrain,]
-testing = dataFilter[-inTrain,]
+# Use 5-fold cross validation to calculate the out of sample error
+folds = createFolds(y = dataFilter$classe,k = 5, list = TRUE, returnTrain = TRUE)
+accuracy = vector(mode= 'numeric',length = 5)
+for (i in 1:5){
+  training = dataFilter[folds[[i]],]
+  testing = dataFilter[-folds[[i]],]
+  rf1 <- randomForest(classe~., data=training, mtry=7, importance = TRUE)
+  prediction_test = predict(rf1, testing)
+  table(testing$classe,prediction_test)
+  error = testing$classe != prediction_test
+  accuracy[i] = sum(error)/length(testing$classe)
+}
 
-# Create random forest model based on training data
-rf1 <- randomForest(classe~., data=training, mtry=7, importance = TRUE)
-
-# Calculate training error
-prediction_train = predict(rf1, training)
-table(training$classe,prediction_train)
-
-# Calculate out of sample error
-prediction_test = predict(rf1, testing)
-table(testing$classe,prediction_test)
-error = testing$classe != prediction_test
-error_rate = sum(error)/length(testing$classe)
-# Out of sample error
-error_rate
+outofsample_Accuacy = mean(accuracy)
 
 # Create random forest model using all training data
 rf <- randomForest(classe~., data=training, mtry=7, importance = TRUE)
